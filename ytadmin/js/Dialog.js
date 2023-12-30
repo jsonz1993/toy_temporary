@@ -48,32 +48,48 @@ function CheckAll() {
     $('input[name="id"]').attr("checked", false);
   }
 }
+
+/**
+ * ContainID: 上传图片的input id
+ * UpType: 'one' | 'more'
+ */
 function UpPage(opentitle, ContainID, UpType) {
   //打开上传页面
+
   art.dialog.open("iframe/UpPage.php?UpType=" + UpType, {
     title: opentitle,
     lock: true,
     fixed: true,
     resize: false,
-    close: function () {
-      if (
-        art.dialog.data("PhotoStr") != undefined &&
-        art.dialog.data("PhotoStr") != ""
-      ) {
-        if (UpType == "one") {
-          $("#" + ContainID).val(art.dialog.data("PhotoStr"));
-        } else {
-          if ($.trim($("#" + ContainID).val()) == "") {
-            $("#" + ContainID).val(art.dialog.data("PhotoStr"));
-          } else {
-            $("#" + ContainID).val(
-              $("#" + ContainID).val() + "," + art.dialog.data("PhotoStr")
-            );
-          }
-        }
-        art.dialog.removeData("PhotoStr");
+    ok: function (contentWindow, top) {
+      const dialog = contentWindow.__dialog;
+			
+      // 点击上传组件的onOk
+      if (dialog && !dialog._isOnOkClick) {
+				if (!dialog.onok()) return false;
+      }
+			
+			const imageListData = art.dialog.data("@JSONZ:uploadedImageList");
+      if (imageListData) {
+        art.dialog.removeData("@JSONZ:uploadedImageList");
+        // 写入图片
+				const $dom = $('#' + ContainID);
+				if ($dom.length) {
+					const isMultiple = UpType === 'more';
+					const imageSrc = 	imageListData.map(item => item.src)
+					const imageValue = isMultiple ? imageSrc[0] : imageSrc.join(',');
+
+					if (isMultiple) {
+						const previousValue = $dom.val();
+						const finallyValue = previousValue ? previousValue + ',' + imageValue : imageValue;
+						$dom.val(finallyValue)
+					} else {
+						$dom.val(imageValue);
+					}
+				}
       }
     },
+    
   });
   return false;
 }

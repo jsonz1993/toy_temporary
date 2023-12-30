@@ -78,12 +78,19 @@
     /* 初始化onok事件 */
     function initButtons() {
 
-        dialog.onok = function () {
-            var remote = false, list = [], id, tabs = $G('tabhead').children;
-            for (var i = 0; i < tabs.length; i++) {
-                if (domUtils.hasClass(tabs[i], 'focus')) {
-                    id = tabs[i].getAttribute('data-content-id');
-                    break;
+        dialog._isOnOkClick = false
+        dialog.onok = function (params) {
+            // @JSONZ: 确认按钮点击事件
+            var remote = false, list = [], tabs = $G('tabhead').children;
+            var id;
+            if (params && params.id) {
+                id = params.id
+            } else {
+                for (var i = 0; i < tabs.length; i++) {
+                    if (domUtils.hasClass(tabs[i], 'focus')) {
+                        id = tabs[i].getAttribute('data-content-id');
+                        break;
+                    }
                 }
             }
 
@@ -108,11 +115,23 @@
                     break;
             }
 
+            dialog._isOnOkClick = true
             if(list) {
                 editor.execCommand('insertimage', list);
                 remote && editor.fireEvent("catchRemoteImage");
+
+                if (editor.saveData) {
+                    if (list.length) {
+                        editor.saveData('@JSONZ:uploadedImageList', list)
+                    } else {
+                        editor.removeData('@JSONZ:uploadedImageList')
+                    }
+                }
             }
+            return true;
         };
+        // @JSONZ: Hard code，注入 dialog
+        window.parent.__dialog = dialog;
     }
 
 
